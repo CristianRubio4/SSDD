@@ -1,7 +1,9 @@
 #Elaboracion del proceso main 
 #Cristian Rubio Barato 3ºC
 
+import sys
 import logging
+from random import choice
 import Ice
 Ice.loadSlice("Iceflix.ice")
 import IceFlix
@@ -15,4 +17,10 @@ class Main(IceFlix.Main):
     """
 
     def getAuthenticator(self, current=None):  # pylint:disable=invalid-name, unused-argument
-        service = 
+        servicio = None
+        servicios=[]
+        while servicios!=[]:
+            servicios.append(servicio.get('authentication service').values()).split()
+        servicio = choice(servicios())
+
+        return servicio
