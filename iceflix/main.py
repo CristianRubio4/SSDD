@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Elaboracion del proceso main
 # Cristian Rubio Barato 3ºC
 
@@ -5,10 +6,13 @@
 # pylint: disable=missing-class-docstring
 # pylint: disable=missing-function-docstring
 
-import logging
-import Ice
-Ice.loadSlice("iceflix.ice")
 import IceFlix  # pylint:disable=C0413 E0401
+import logging
+import sys
+import time
+import os
+import Ice
+Ice.loadSlice(os.path.join(os.path.dirname(__file__), "iceflix.ice"))
 
 
 class MainApp(Ice.Application):
@@ -25,56 +29,58 @@ class MainApp(Ice.Application):
         logging.info("Running Main application")
         comm = self.communicator()
         self.adapter = comm.createObjectAdapter("MainAdapter")
+        proxy = self.adapter.add(self.servant, comm.stringToIdentity("proxy"))
+        print(proxy, flush=True)
         self.adapter.activate()
-
         self.proxy = self.adapter.addWithUUID(self.servant)
-
         self.shutdownOnInterrupt()
         comm.waitForShutdown()
-
         return 0
 
 
 class Main(IceFlix.Main):
     # Creacion de diccionarios y listas para los distintos servicios
     def __init__(self):
-        self.servicios_autenticador = {}
-        self.proxies_autenticador = []
-        self.servicios_catalogo = {}
-        self.proxies_catalogo = []
-        self.servicios_archivo = {}
+        self.authenticator_services = {}
+        self.authenticator_proxies = []
+        self.catalog_services = {}
+        self.catalog_proxies = []
+        self.file_services = {}
         self.file_proxies = []
+        self.time_services = []
 
     def newService(self, proxy, id_service, current):  # pylint:disable=invalid-name, unused-argument
         "Receive a proxy of a new service."
         # Si no encontramos el id del servicio en la lista de autenticadores de servicios lo
         # añadimos, además de el proxy. Eso lo haremos para tosos los servicios
         # (authenticator, catalogo y ficheros).
-
-        if id_service not in self.servicios_autenticador:
+        if id_service not in self.authenticator_services:
+            self.time_services[id_service] = time.time()
             logging.info("Authenticator service")
-            self.servicios_autenticador[id_service] = IceFlix.AuthenticatorPrx.uncheckedCast(
+            self.authenticator_services[id_service] = IceFlix.AuthenticatorPrx.uncheckedCast(
                 id_service)
-            self.proxies_autenticador.append(
-                IceFlix.AuthenticatorPrx.uncheckedCast(id_service))
+            self.authenticator_proxies.append(
+                IceFlix.AuthenticatorPrx.uncheckedCast(proxy))
 
-        elif id_service not in self.servicios_catalogo:
+        elif id_service not in self.catalog_services:
+            self.time_services[id_service] = time.time()
             logging.info("Catalog service")
-            self.servicios_catalogo[id_service] = IceFlix.MediaCatalogPrx.uncheckedCast(
+            self.catalog_services[id_service] = IceFlix.MediaCatalogPrx.uncheckedCast(
                 id_service)
-            self.proxies_catalogo.append(
-                IceFlix.MediaCatalogPrx.uncheckedCast(id_service))
+            self.catalog_proxies.append(
+                IceFlix.MediaCatalogPrx.uncheckedCast(proxy))
 
-        elif id_service not in self.servicios_archivo:
+        elif id_service not in self.file_services:
+            self.time_services[id_service] = time.time()
             logging.info("File service")
-            self.servicios_archivo[id_service] = IceFlix.FileServicePrx.uncheckedCast(
+            self.file_services[id_service] = IceFlix.FileServicePrx.uncheckedCast(
                 id_service)
             self.file_proxies.append(
-                IceFlix.FileServicePrx.uncheckedCast(id_service))
+                IceFlix.FileServicePrx.uncheckedCast(proxy))
 
     def getAuthenticator(self, current=None):  # pylint:disable=invalid-name, unused-argument
         ''' Method to get one authentication service'''
-        service = self.proxies_autenticador
+        service = self.authenticator_proxies
         services = list(service)
         if not services:
             raise IceFlix.TemporaryUnavailable()
@@ -84,7 +90,7 @@ class Main(IceFlix.Main):
 
     def getCatalog(self, current=None):  # pylint:disable=invalid-name, unused-argument
         ''' Method to get one authentication service'''
-        service = self.proxies_catalogo
+        service = self.catalog_proxies
         services = list(service)
         if not services:
             raise IceFlix.TemporaryUnavailable()
@@ -97,10 +103,18 @@ class Main(IceFlix.Main):
         services = list(service)
         if not services:
             raise IceFlix.TemporaryUnavailable()
-        file = services.pop(0)
-        return file
+        archive = services.pop(0)
+        return archive
 
     def announce(self, proxy, service_id, current):  # pylint:disable=invalid-name, unused-argument
         "Announcements handler."
-        
-        return
+        actual_time = time.time()
+        reemplazo = actual_time - self.time_services[service_id]
+        if reemplazo >= 30:
+            self.time_services[service_id] = None
+        else:
+            reemplazo = 0
+
+if __name__ == '__main__':
+    aplication = MainApp()
+    sys.exit(aplication.main(sys.argv))
