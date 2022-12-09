@@ -37,13 +37,13 @@ class MainApp(Ice.Application):
 class Main(IceFlix.Main):
     # Creacion de diccionarios y listas para los distintos servicios
     def __init__(self):
-        self.authenticator_services = {}
-        self.authenticator_proxies = []
-        self.catalog_services = {}
-        self.catalog_proxies = []
-        self.file_services = {}
-        self.file_proxies = []
-        self.time_services = []
+        self.authenticator_services = list()
+        self.authenticator_proxies = list()
+        self.catalog_services = list()
+        self.catalog_proxies = list()
+        self.file_services = list()
+        self.file_proxies = list()
+        self.time_services = list()
 
   # Si no encontramos el id del servicio en la lista de autenticadores de servicios lo
         # añadimos, además de el proxy. Eso lo haremos para tosos los servicios
