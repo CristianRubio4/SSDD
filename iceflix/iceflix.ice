@@ -41,6 +41,11 @@
         void removeFile(string mediaId, string adminToken) throws Unauthorized, WrongMediaId;
     };
 
+    // Interface to be used in the topic for file availability announcements
+    interface FileAvailabilityAnnounce {
+        void announceFiles(StringList mediaIds, string serviceId);
+    };
+
     ///////////// Catalog service related structs and interfaces /////////////
     // Media info
     struct MediaInfo {
@@ -62,12 +67,17 @@
         StringList getTilesByName(string name, bool exact);
         StringList getTilesByTags(StringList tags, bool includeAllTags, string userToken) throws Unauthorized;
 
-        void newMedia(string mediaId, FileService* provider);
-        void removeMedia(string mediaId, FileService* provider);
         void renameTile(string mediaId, string name, string adminToken) throws Unauthorized, WrongMediaId;
 
         void addTags(string mediaId, StringList tags, string userToken) throws Unauthorized, WrongMediaId;
         void removeTags(string mediaId, StringList tags, string userToken) throws Unauthorized, WrongMediaId;
+    };
+
+    // Interface to be used in the topic for catalog media changes
+    interface CatalogUpdate {
+        void renameTile(string mediaId, string newName, string serviceId);
+        void addTags(string mediaId, string user, StringList tags, string serviceId);
+        void removeTags(string mediaId, string user, StringList tags, string serviceId);
     };
 
     ///////////// Auth server /////////////
@@ -81,12 +91,23 @@
         void removeUser(string user, string adminToken) throws Unauthorized, TemporaryUnavailable;
     };
 
+    // Interface to be used in the topic for user related updates
+    interface UserUpdate {
+        void newToken(string user, string token, string serviceId);
+        void revokeToken(string token, string serviceId);
+
+        void newUser(string user, string passwordHash, string serviceId);
+        void removeUser(string user, string serviceId);
+    };
+
     ///////////// Main server /////////////
     interface Main {
         Authenticator* getAuthenticator() throws TemporaryUnavailable;
         MediaCatalog* getCatalog() throws TemporaryUnavailable;
         FileService* getFileService() throws TemporaryUnavailable;
+    };
 
+    interface Announcement {
         void newService(Object* service, string serviceId);
         void announce(Object* service, string serviceId);
     };
