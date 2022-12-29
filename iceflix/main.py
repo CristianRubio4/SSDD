@@ -136,7 +136,7 @@ class Main(IceFlix.Main):
         return proxy
 
     # En este metodo, lo que hacemos sera, en primer lugar, mirar el tiempo con el que entra al
-    # announce para poder compararlo con el que tenemos de antes (cuando se crea el servicio),
+    # announce para poder compararlo con el que tenemos de antes (cuando se crea el servicio)
     # posteriormente comprobamos si el tiempo es mayor que 30, miramos de que tipo es el servicio,
     # para eliminar su proxy y su service_id, si no es mayor que 30 actualizamos el contador a 0
     # para el siguiente servicio.
