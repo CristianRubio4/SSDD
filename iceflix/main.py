@@ -13,7 +13,6 @@ import IceFlix  # pylint:disable=import-error C0413
                 # pero ese problema se resuelve en tiempo de compilacion.
 
 
-
 class MainApp(Ice.Application):
     """Example Ice.Application for a Main service."""
 
@@ -35,11 +34,11 @@ class MainApp(Ice.Application):
         self.proxy = self.adapter.addWithUUID(self.servant)
         # creacion de hilos para que se ejecute de forma paralela y así poder
         # comprobar el announce.
-        hilo_auth = threading.Thread(target=self.servant.hiloauth())
+        hilo_auth = threading.Thread(target=self.servant.hiloauth)
         hilo_auth.start()
-        hilo_catalog = threading.Thread(target=self.servant.hilocatalog())
+        hilo_catalog = threading.Thread(target=self.servant.hilocatalog)
         hilo_catalog.start()
-        hilo_file = threading.Thread(target=self.servant.hilofile())
+        hilo_file = threading.Thread(target=self.servant.hilofile)
         hilo_file.start()
         self.shutdownOnInterrupt()
         comm.waitForShutdown()
@@ -165,10 +164,10 @@ class Main(IceFlix.Main):
     def hiloauth(self):
         """Hilo en el que comprobamos el servicio authenticator."""
         while 1:
-            additional_services = list(self.authenticator_services)
-            for service_id in additional_services and len(self.authenticator_services) != 0:
+            additional_services = self.authenticator_services.copy()
+            for service_id in additional_services:
                 tiempo_service = self.time_services.get(service_id)
-                if time.time() - tiempo_service > 30:
+                if time.time() - tiempo_service > 30 and len(self.authenticator_services) != 0:
                     self.authenticator_services.pop(service_id)
                     print(
                         f'Eliminado servicio authenticator, cuyo service_id es: {service_id}')
@@ -176,10 +175,10 @@ class Main(IceFlix.Main):
     def hilocatalog(self):
         """Hilo en el que comprobamos el servicio catalogo."""
         while 1:
-            additional_services = list(self.catalog_services)
-            for service_id in additional_services and len(self.catalog_services) != 0:
+            additional_services = self.catalog_services.copy()
+            for service_id in additional_services:
                 tiempo_service = self.time_services.get(service_id)
-                if time.time() - tiempo_service > 30:
+                if time.time() - tiempo_service > 30 and len(self.catalog_services) != 0:
                     self.catalog_services.pop(service_id)
                     print(
                         f'Eliminado servicio catalogo, cuyo service_id es: {service_id}')
@@ -187,10 +186,10 @@ class Main(IceFlix.Main):
     def hilofile(self):
         """Hilo en el que comprobamos el servicio file."""
         while 1:
-            additional_services = list(self.file_services)
-            for service_id in additional_services and len(self.file_services) != 0:
+            additional_services = self.file_services.copy()
+            for service_id in additional_services:
                 tiempo_service = self.time_services.get(service_id)
-                if time.time() - tiempo_service > 30:
+                if time.time() - tiempo_service > 30 and len(self.file_services) != 0:
                     self.file_services.pop(service_id)
                     print(
                         f'Eliminado servicio file, cuyo service_id es: {service_id}')
