@@ -21,6 +21,9 @@
     // List of strings
     sequence<string> StringList;
 
+    // Dictionary with str keys and str values
+    dictionary<string, string> DictStrToStr;
+
     ///////////// File server related interfaces /////////////
     // Handle file transfer
     interface FileHandler {
@@ -71,6 +74,8 @@
 
         void addTags(string mediaId, StringList tags, string userToken) throws Unauthorized, WrongMediaId;
         void removeTags(string mediaId, StringList tags, string userToken) throws Unauthorized, WrongMediaId;
+
+        void getAllDeltas();
     };
 
     // Interface to be used in the topic for catalog media changes
@@ -81,6 +86,12 @@
     };
 
     ///////////// Auth server /////////////
+    class AuthenticatorData {
+        string adminToken;
+        DictStrToStr currentUsers; // users: passwords
+        DictStrToStr activeTokens; // users: tokens
+    };
+
     interface Authenticator {
         string refreshAuthorization(string user, string passwordHash) throws Unauthorized;
         bool isAuthorized(string userToken);
@@ -89,6 +100,8 @@
 
         void addUser(string user, string passwordHash, string adminToken) throws Unauthorized, TemporaryUnavailable;
         void removeUser(string user, string adminToken) throws Unauthorized, TemporaryUnavailable;
+
+        AuthenticatorData bulkUpdate();
     };
 
     // Interface to be used in the topic for user related updates
@@ -108,7 +121,6 @@
     };
 
     interface Announcement {
-        void newService(Object* service, string serviceId);
         void announce(Object* service, string serviceId);
     };
 };
