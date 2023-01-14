@@ -2,6 +2,7 @@
 """Elaboracion del proceso main"""
 # Cristian Rubio Barato 3ºC
 
+import random
 import sys
 import threading
 import time
@@ -110,17 +111,17 @@ class Announcement(IceFlix.Announcement):
                 proxy.ice_isA("::IceFlix::Authenticator")):
             time_services[service_id] = time.time()
             authenticator_services[service_id] = proxy
-            print("***Announcement authenticator comprobado correctamente***")
+            print(f'***Announcement authenticator comprobado correctamente con proxy: {proxy}***')
 
         elif service_id in catalog_services or proxy.ice_isA("::IceFlix::MediaCatalog"):
             time_services[service_id] = time.time()
             catalog_services[service_id] = proxy
-            print("***Announcement catalogo comprobado correctamente***")
+            print(f'***Announcement catalogo comprobado correctamente con proxy: {proxy}***')
 
         elif service_id in file_services or proxy.ice_isA("::IceFlix::FileService"):
             time_services[service_id] = time.time()
             file_services[service_id] = proxy
-            print("***Announcement fichero comprobado correctamente***")
+            print(f'***Announcement file comprobado correctamente con proxy: {proxy}***')
 
     def mandar_announcement(self, publicador, proxymain, idmain, tiempo):  # pylint:disable=R0201
         """_summary_
@@ -156,7 +157,7 @@ class Main(IceFlix.Main):
         if not services:
             raise IceFlix.TemporaryUnavailable
         # lo he convertido buscando en esta direccion:
-        auth = list(services.items())[0][1]
+        auth = random.choice(list(services.items()))[0][1]
         # https://thispointer.com/python-get-first-value-in-a-dictionary/
         auth = MainApp.communicator().stringToProxy(str(auth))
         proxy = IceFlix.AuthenticatorPrx.checkedCast(auth)
@@ -170,7 +171,7 @@ class Main(IceFlix.Main):
         services = catalog_services
         if not services:
             raise IceFlix.TemporaryUnavailable
-        catalog = list(services.items())[0][1]
+        catalog = random.choice(list(services.items()))[0][1]
         catalog = MainApp.communicator().stringToProxy(str(catalog))
         proxy = IceFlix.MediaCatalogPrx.checkedCast(catalog)
         print(f'***Proxy catalogo recopilado correctamente: {proxy}***')
@@ -183,7 +184,7 @@ class Main(IceFlix.Main):
         services = file_services
         if not services:
             raise IceFlix.TemporaryUnavailable
-        archive = list(services.items())[0][1]
+        archive = random.choice(list(services.items()))[0][1]
         archive = MainApp.communicator().stringToProxy(str(archive))
         proxy = IceFlix.FileServicePrx.checkedCast(archive)
         print(f'***Proxy file recopilado correctamente: {proxy}***')
@@ -225,7 +226,7 @@ class Main(IceFlix.Main):
             for service_id in additional_services:
                 tiempo_service = time_services.get(service_id)
                 if time.time() - tiempo_service > 10 and len(file_services)!=0:
-                    file_services.pop(service_id)    
+                    file_services.pop(service_id)
                     time_services.pop(service_id)
                     print(
                         f'Eliminado servicio file, cuyo service_id es: {service_id}\n')
