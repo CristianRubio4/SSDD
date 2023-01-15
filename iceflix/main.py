@@ -28,7 +28,7 @@ class MainApp(Ice.Application):
         self.proxy = None
         self.adapter = None
         self.uuid = uuid4()
-        self.tiempo = 10
+        self.tiempo = 8
 
     def run(self, args):
         """Run the application, adding the needed objects to the adapter."""
