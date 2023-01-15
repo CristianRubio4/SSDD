@@ -75,11 +75,12 @@ class MainApp(Ice.Application):
         self.proxy = self.adapter.addWithUUID(self.servant)
         # creacion de hilos para que se ejecute de forma paralela y así poder
         # comprobar el announce.
-        hilo_auth = threading.Thread(target=self.servant.hiloauth,daemon=True)
+        hilo_auth = threading.Thread(target=self.servant.hiloauth, daemon=True)
         hilo_auth.start()
-        hilo_catalog = threading.Thread(target=self.servant.hilocatalog,daemon=True)
+        hilo_catalog = threading.Thread(
+            target=self.servant.hilocatalog, daemon=True)
         hilo_catalog.start()
-        hilo_file = threading.Thread(target=self.servant.hilofile,daemon=True)
+        hilo_file = threading.Thread(target=self.servant.hilofile, daemon=True)
         hilo_file.start()
 
         self.shutdownOnInterrupt()
@@ -111,17 +112,20 @@ class Announcement(IceFlix.Announcement):
                 proxy.ice_isA("::IceFlix::Authenticator")):
             time_services[service_id] = time.time()
             authenticator_services[service_id] = proxy
-            print(f'***Announcement authenticator comprobado correctamente con proxy: {proxy}***')
+            print(
+                f'***Announcement authenticator comprobado correctamente con proxy: {proxy}***')
 
         elif service_id in catalog_services or proxy.ice_isA("::IceFlix::MediaCatalog"):
             time_services[service_id] = time.time()
             catalog_services[service_id] = proxy
-            print(f'***Announcement catalogo comprobado correctamente con proxy: {proxy}***')
+            print(
+                f'***Announcement catalogo comprobado correctamente con proxy: {proxy}***')
 
         elif service_id in file_services or proxy.ice_isA("::IceFlix::FileService"):
             time_services[service_id] = time.time()
             file_services[service_id] = proxy
-            print(f'***Announcement file comprobado correctamente con proxy: {proxy}***')
+            print(
+                f'***Announcement file comprobado correctamente con proxy: {proxy}***')
 
     def mandar_announcement(self, publicador, proxymain, idmain, tiempo):  # pylint:disable=R0201
         """_summary_
@@ -140,72 +144,87 @@ class Announcement(IceFlix.Announcement):
 
 
 class Main(IceFlix.Main):
-    """Desarrollo de los metodos necesarios para el servicio."""
-
-    # En este metodo, lo que haremos sera crear una variable services la cual contienen
-    # los servicios y proxies dependiendo de el tipo de servicio que busquemos, posteriormente,
-    # cogemos el que esta en la posicion 0. Con stringToProxy, establecemos una comunicacion
-    # con mainApp mediante el metodo communicator, pasandole el proxy obtenido.
-    # con checked cast asumimos que el puntero es del tipo que indicamos.
-    # En el primer caso seria de tipo AuthenticatorPrx
+    """_summary_
+    En esta clase hacemos los metodos que nos exigen, entre ellos los getter de
+    los distintos servicios y sus respectivos hilos.
+    """
 
     def getAuthenticator(self, current=None):  # pylint:disable=invalid-name, unused-argument R0201
         ''' Method to get one authentication service'''
+        # Este código define un método "getAuthenticator" en la clase MainApp que obtiene
+        # un servicio de autenticación aleatorio del diccionario authenticator_services.
+
         print("****Obteniendo proxy authenticator****")
         auth = ""
         services = authenticator_services
         if not services:
             raise IceFlix.TemporaryUnavailable
-        # lo he convertido buscando en esta direccion:
-        auth = random.choice(list(services.items()))[0][1]
-        # https://thispointer.com/python-get-first-value-in-a-dictionary/
+        # Seleccionamos una referencia aleatoria del diccionario de servicios
+        auth = random.choice(list(services.items()))[1]
         auth = MainApp.communicator().stringToProxy(str(auth))
         proxy = IceFlix.AuthenticatorPrx.checkedCast(auth)
-        print(f'***Proxy authenticator recopilado correctamente: {proxy}***')
+        print(f'***Proxy authenticator recopilado correctamente: {proxy}***\n')
         return proxy
 
     def getCatalog(self, current=None):  # pylint:disable=invalid-name, unused-argument R0201
         ''' Method to get one authentication service'''
+        # Este código define un método "getCatalog" en la clase MainApp que obtiene
+        # un servicio de catalogo aleatorio del diccionario catalog_services.
+
         print("****Obteniendo proxy catalogo****")
         catalog = ""
         services = catalog_services
         if not services:
             raise IceFlix.TemporaryUnavailable
-        catalog = random.choice(list(services.items()))[0][1]
+        catalog = random.choice(list(services.items()))[1]
         catalog = MainApp.communicator().stringToProxy(str(catalog))
         proxy = IceFlix.MediaCatalogPrx.checkedCast(catalog)
-        print(f'***Proxy catalogo recopilado correctamente: {proxy}***')
+        print(f'***Proxy catalogo recopilado correctamente: {proxy}***\n')
         return proxy
 
     def getFileService(self, current=None):  # pylint:disable=invalid-name, unused-argument R0201
         ''' Method to get one authentication service'''
+        # Este código define un método "getFileService" en la clase MainApp que obtiene
+        # un servicio de file aleatorio del diccionario file_services.
+
         print("****Obteniendo proxy file****")
         archive = ""
         services = file_services
         if not services:
             raise IceFlix.TemporaryUnavailable
-        archive = random.choice(list(services.items()))[0][1]
+        archive = random.choice(list(services.items()))[1]
         archive = MainApp.communicator().stringToProxy(str(archive))
         proxy = IceFlix.FileServicePrx.checkedCast(archive)
-        print(f'***Proxy file recopilado correctamente: {proxy}***')
+        print(f'***Proxy file recopilado correctamente: {proxy}***\n')
         return proxy
 
-    # A continuacion, hacemos un metodo en el que comprobamos
-    # que el servicio en el servicio recibido, no nos pasamos de
-    # el tiempo que nos indican, en este caso 10 segundos, si nos
-    # pasamos, eliminamos el servicio y el proxy.
     def hiloauth(self):  # pylint:disable=R0201
-        """Hilo en el que comprobamos el servicio authenticator."""
+        """_summary_
+        El hilo entra en un bucle infinito, y en cada iteración realiza lo siguiente:
+        - Crea una copia del diccionario "time_services" y la almacena en
+            "additional_services"
+        - Itera sobre cada elemento del diccionario "additional_services", obteniendo el
+            "service_id" de cada uno.
+        - Obtiene el tiempo de servicio asociado al "service_id" en el diccionario "time_services"
+            y lo almacena en "tiempo_service"
+        - Si "tiempo_service" no es None, entonces comparar el tiempo actual con "tiempo_service"
+            y si la diferencia es mayor a 10 segundos y el servicio authenticator tiene al menos
+            un elemento, elimina ese elemento del diccionario "authenticator_services" y
+            "time_services" y muestra un mensaje indicando que se ha eliminado el servicio.
+        ESTE METODO SE HARA IGUAL EN EL RESTO DE HILOS, PERO CAMBIANDO LOS RESPECTIVOS DICCIONARIOS
+         """
+        # Hilo en el que comprobamos el servicio authenticator.
         while 1:
             additional_services = time_services.copy()
             for service_id in additional_services:
                 # mira si eso te devuleve el tiempo del servicio creo que si
                 tiempo_service = time_services.get(service_id)
-                if time.time() - tiempo_service > 10 and len(authenticator_services)!=0:
-                    authenticator_services.pop(service_id)
-                    time_services.pop(service_id)
-                    print(
-                        f'Eliminado servicio authenticator, cuyo service_id es: {service_id}\n')
+                if tiempo_service is not None:
+                    if time.time() - tiempo_service > 10 and len(authenticator_services) != 0:
+                        authenticator_services.pop(service_id)
+                        time_services.pop(service_id)
+                        print(
+                            f'Eliminado servicio authenticator, cuyo service_id es: {service_id}\n')
 
     def hilocatalog(self):  # pylint:disable=R0201
         """Hilo en el que comprobamos el servicio catalogo."""
@@ -213,11 +232,12 @@ class Main(IceFlix.Main):
             additional_services = time_services.copy()
             for service_id in additional_services:
                 tiempo_service = time_services.get(service_id)
-                if time.time() - tiempo_service > 10 and len(catalog_services)!=0:
-                    catalog_services.pop(service_id)
-                    time_services.pop(service_id)
-                    print(
-                        f'Eliminado servicio catalogo, cuyo service_id es: {service_id}\n')
+                if tiempo_service is not None:
+                    if time.time() - tiempo_service > 10 and len(catalog_services) != 0:
+                        catalog_services.pop(service_id)
+                        time_services.pop(service_id)
+                        print(
+                            f'Eliminado servicio catalogo, cuyo service_id es: {service_id}\n')
 
     def hilofile(self):  # pylint:disable=R0201
         """Hilo en el que comprobamos el servicio file."""
@@ -225,11 +245,12 @@ class Main(IceFlix.Main):
             additional_services = time_services.copy()
             for service_id in additional_services:
                 tiempo_service = time_services.get(service_id)
-                if time.time() - tiempo_service > 10 and len(file_services)!=0:
-                    file_services.pop(service_id)
-                    time_services.pop(service_id)
-                    print(
-                        f'Eliminado servicio file, cuyo service_id es: {service_id}\n')
+                if tiempo_service is not None:
+                    if time.time() - tiempo_service > 10 and len(file_services) != 0:
+                        file_services.pop(service_id)
+                        time_services.pop(service_id)
+                        print(
+                            f'Eliminado servicio file, cuyo service_id es: {service_id}\n')
 
 
 if __name__ == '__main__':
