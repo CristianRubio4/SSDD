@@ -1,6 +1,10 @@
 # Template project for ssdd-lab
 https://github.com/CristianRubio4/SSDD.git
 
+Para poder ejecutar el proyecto debemos: 
+  - acceder al directorio /SSDD/ y hacer un ./run_icestorm para cargar los topics.
+  - posteriormente ./run_service el cual nos ejecutara el programa.
+
 This repository is a Python project template.
 It contains the following files and directories:
 
