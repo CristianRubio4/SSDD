@@ -44,11 +44,8 @@ class MainApp(Ice.Application):
 
         print(proxy, flush=True)
 
-        topic_manager_str_prx = "IceStorm/TopicManager -t:tcp -h localhost -p 10000"
         topic_manager = IceStorm.TopicManagerPrx.checkedCast(  # pylint:disable=E1101
-            self.communicator().stringToProxy(topic_manager_str_prx),
-        )
-
+            self.communicator().propertyToProxy("IceStorm.TopicManager"))
         if not topic_manager:
             raise RuntimeError("Invalid TopicManager proxy")
 
@@ -115,19 +112,19 @@ class Announcement(IceFlix.Announcement):
             time_services[service_id] = time.time()
             authenticator_services[service_id] = proxy
             logging.info(
-                '***Announcement authenticator comprobado y almacenado correctamente con proxy: %s***\n', proxy)
+                '***Announcement authenticator comprobado correctamente con proxy: %s***\n', proxy)
 
         elif service_id in catalog_services or proxy.ice_isA("::IceFlix::MediaCatalog"):
             time_services[service_id] = time.time()
             catalog_services[service_id] = proxy
             logging.info(
-                '***Announcement catalogo comprobado y almacenado correctamente con proxy: %s***\n', proxy)
+                '***Announcement catalogo comprobado correctamente con proxy: %s***\n', proxy)
 
         elif service_id in file_services or proxy.ice_isA("::IceFlix::FileService"):
             time_services[service_id] = time.time()
             file_services[service_id] = proxy
             logging.info(
-                '***Announcement file comprobado y almacenado correctamente con proxy: %s***\n', proxy)
+                '***Announcement file comprobado correctamente con proxy: %s***\n', proxy)
 
     def mandar_announcement(self, publicador, proxymain, idmain, tiempo):  # pylint:disable=R0201
         """_summary_
@@ -187,7 +184,7 @@ class Main(IceFlix.Main):
         catalog = MainApp.communicator().stringToProxy(str(catalog))
         proxy = IceFlix.MediaCatalogPrx.checkedCast(catalog)
         logging.info(
-            ' ***Proxy catalogo recopilado correctamente: %s***\n',proxy)
+            ' ***Proxy catalogo recopilado correctamente: %s***\n', proxy)
         return proxy
 
     def getFileService(self, current=None):  # pylint:disable=invalid-name, unused-argument R0201
@@ -204,7 +201,7 @@ class Main(IceFlix.Main):
         archive = random.choice(list(services.items()))[1]
         archive = MainApp.communicator().stringToProxy(str(archive))
         proxy = IceFlix.FileServicePrx.checkedCast(archive)
-        logging.info('***Proxy file recopilado correctamente: %s***\n',proxy)
+        logging.info('***Proxy file recopilado correctamente: %s***\n', proxy)
         return proxy
 
     def hiloauth(self):  # pylint:disable=R0201
@@ -229,11 +226,11 @@ class Main(IceFlix.Main):
                 # mira si eso te devuleve el tiempo del servicio creo que si
                 tiempo_service = time_services.get(service_id)
                 if tiempo_service is not None:
-                    if time.time() - tiempo_service > 10 and len(authenticator_services) != 0:
+                    if time.time() - tiempo_service > 10 and service_id in authenticator_services:
                         authenticator_services.pop(service_id)
                         time_services.pop(service_id)
                         logging.info(
-                            'Eliminado servicio authenticator, cuyo service_id es: %s\n',service_id)
+                           'Eliminado servicio authenticator, cuyo service_id es: %s\n', service_id)
 
     def hilocatalog(self):  # pylint:disable=R0201
         """Hilo en el que comprobamos el servicio catalogo."""
@@ -242,11 +239,11 @@ class Main(IceFlix.Main):
             for service_id in additional_services:
                 tiempo_service = time_services.get(service_id)
                 if tiempo_service is not None:
-                    if time.time() - tiempo_service > 10 and len(catalog_services) != 0:
+                    if time.time() - tiempo_service > 10 and service_id in catalog_services:
                         catalog_services.pop(service_id)
                         time_services.pop(service_id)
                         logging.info(
-                            'Eliminado servicio catalogo, cuyo service_id es: %s\n',service_id)
+                            'Eliminado servicio catalogo, cuyo service_id es: %s\n', service_id)
 
     def hilofile(self):  # pylint:disable=R0201
         """Hilo en el que comprobamos el servicio file."""
@@ -255,11 +252,11 @@ class Main(IceFlix.Main):
             for service_id in additional_services:
                 tiempo_service = time_services.get(service_id)
                 if tiempo_service is not None:
-                    if time.time() - tiempo_service > 10 and len(file_services) != 0:
+                    if time.time() - tiempo_service > 10 and service_id in file_services:
                         file_services.pop(service_id)
                         time_services.pop(service_id)
                         logging.info(
-                            'Eliminado servicio file, cuyo service_id es: %s\n',service_id)
+                            'Eliminado servicio file, cuyo service_id es: %s\n', service_id)
 
 
 if __name__ == '__main__':
